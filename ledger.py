@@ -10,7 +10,7 @@ Examples
 """
 
 # Valid items
-ITEMS = ('','','','','','','','','','','','','')
+ITEMS = ('coffee','youtube','nebula','','','','','','','','','','')
 # Valid modes
 MODES = ('add','show')
 # Valid display options
@@ -19,9 +19,14 @@ DISP = ('full','head','summary')
 LEDGER_PATH = ''
 
 
+def append_row(timestamp:str,item:str,val:int,comment:str=''):
+    with open(LEDGER_PATH,'a') as f:
+        f.write(f'{timestamp},{item},{val},{comment}')
+
 if __name__=="__main__":
     import sys
     from optparse import OptionParser
+    from datetime import datetime as dt
 
     p = OptionParser()
     p.set_usage('ledger.py <>')
@@ -34,5 +39,12 @@ if __name__=="__main__":
     p.add_option('-','--',dest='',type='',help='')
 
     # asserts
+
+    # conditional flow
+    
+
+
+
+
 
 
