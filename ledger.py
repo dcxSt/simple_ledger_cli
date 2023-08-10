@@ -11,9 +11,10 @@ Examples
 """
 
 # Valid items
-ITEMS = ('coffee','youtube','nebula','chess','podcast','icecream',
-         'sport','chinese','painting','code','writing','reading',
-         'task','bulletlog')
+ITEMS_SPEND = ('coffee','youtube','nebula','chess','podcast','icecream')
+ITEMS_EARN  = ('sport','chinese','painting','code','writing','reading',
+                 'task','bulletlog')
+ITEMS = ITEMS_SPEND + ITEMS_EARN
 # Valid modes
 MODES = ('add','show')
 # Valid display options
@@ -41,19 +42,48 @@ def display_head(n:int=10):
     return
 
 def display_summary():
-    print("Summary not yet implemented, calling balance!")
-    balance() # dummy
+    df=read_csv(LEDGER_PATH,header=None)
+    # Fill pie chart data arrays
+    spend_y=[]
+    spend_labels=[]
+    for i in ITEMS_SPEND:
+        amount_spent=abs(df.loc[df[1]==i][2].sum()) # all negative
+        if amount_spent > 0:
+            spend_y.append(amount_spent)
+            spend_labels.append(f'{i} ${amount_spent}')
+    earn_y =[]
+    earn_labels=[]
+    for i in ITEMS_EARN:
+        amount_earned=df.loc[df[1]==i][2].sum() # all positive
+        if amount_earned > 0:
+            earn_y.append(amount_earned)
+            earn_labels.append(f'{i} ${amount_earned}')
+    # Plot both pie charts
+    plt.ion()
+    plt.subplots(1,2,figsize=(12,6))
+    plt.suptitle(f'balance={df[2].sum()}')
+    plt.subplot(1,2,1)
+    plt.title("Spendings")
+    plt.pie(spend_y,labels=spend_labels)
+    plt.subplot(1,2,2)
+    plt.title("Earnings")
+    plt.pie(earn_y,labels=earn_labels)
+    plt.show()
+    plt.pause(0.1)
+    input("Hit [enter] to exit")
     return 
 
 def balance():
     df=read_csv(LEDGER_PATH,header=None)
-    print(df[2].sum())
+    print(f"balance={df[2].sum()}")
+    return
 
 if __name__=="__main__":
     import sys
     from argparse import ArgumentParser
     from datetime import datetime as dt
     from pandas import read_csv
+    import matplotlib.pyplot as plt
 
     p = ArgumentParser(prog='ledger',
                        description='keep track of spending & earning')
@@ -62,31 +92,37 @@ if __name__=="__main__":
                    help=f'Mode must be in {MODES}')
     p.add_argument('-i','--item',dest='item',type=str,
                  help=f'Item must be in {ITEMS}')
-    p.add_argument('-v','--dollar_value',dest='dollar_value',
+    p.add_argument('-v','--val',dest='val',
                  type=int,default=0,
                  help=f'Dollar value earned.')
     p.add_argument('-c','--comment',dest='comment',type=str,default='',
-                 help='')
+                 help='Add a comment, type any string here.')
     p.add_argument('-d','--disp',dest='display_mode',type=str,
                  default='summary',
                  help=f'Disp must be in {DISP}')
-
     args = p.parse_args()
-    print(f"args {args}\n")
     assert args.mode in MODES, f'could not find {args.mode} in {MODES}'
-    # conditional flow
+    # Conditional Flow
     if args.mode=="add":
         assert args.item in ITEMS, f'could not find {args.item} in {ITEMS}'
-        assert args.dollar_value!=0, f'dollar value must be set with -v,\
-                --val to a non-zero value'
+        assert args.val!=0, f'$ value must be set & !=0 (-v, --val)'
+        if args.item in ITEMS_SPEND:
+            print(f"{args.item} is a sin. Interpret val as $ spent.")
+            args.val = -abs(args.val)
+        elif args.item in ITEMS_EARN:
+            print(f"{args.item} is virtuous. Interpret val as income.")
+            args.val = abs(args.val)
+        else:
+            raise Exception("This should never execute.")
+
         timestamp = dt.now().__str__()
-        append_row(timestamp,args.item,args.dollar_value,args.comment)
+        append_row(timestamp,args.item,args.val,args.comment)
     elif args.mode=="show":
         assert args.display_mode in DISP, f'could not find \
-                {args.display_mode} in DISP'
-        if args.display_mode == 'full': 
+{args.display_mode} in DISP'
+        if args.display_mode == 'full':
             display_full()
-        elif args.display_mode == 'head': 
+        elif args.display_mode == 'head':
             display_head()
         elif args.display_mode == 'summary':
             display_summary()
@@ -94,6 +130,8 @@ if __name__=="__main__":
             raise Exception('This error message should never display.')
     else:
         raise Exception('This error message should never display.')
+    print("Success")
+    
     
 
 
