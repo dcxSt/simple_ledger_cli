@@ -42,12 +42,9 @@ def display_full():
 
 def display_head(n: int = 10):
     with open(LEDGER_PATH, "r") as f:
-        line = f.readline()
-        for i in range(n):
-            print(line)
-            line = f.readline()
-            if line == "":
-                break
+        lines = f.readlines()
+    for i in lines[-n:]:
+        print(i)
     return
 
 def display_summary():
