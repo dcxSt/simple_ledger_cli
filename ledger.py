@@ -30,6 +30,33 @@ DISP = ("full", "head", "summary")
 # Path to ledger .csv database file
 LEDGER_PATH = "/Users/steve/.ledger.csv"
 
+from datetime import datetime as dt
+import datetime
+
+def parse_timestamp_string(timestamp_string):
+    return dt.strptime(timestamp_string[:4+1+2+1+2+1+2+1+2+1+2], "%Y-%m-%d %H:%M:%S")
+
+
+def get_yesterday_bulletlog_val():
+    with open(LEDGER_PATH, "r") as f:
+        lines = f.readlines()[-30:] # heuristic, not gonna be more than 30 away
+    timestamp_str,item,val,_ = lines[-1].split(",")
+    timestamp = parse_timestamp_string(timestamp_str)
+    delta = dt.now() - timestamp
+    while delta < datetime.timedelta(days=1,hours=12) and len(lines)>0:
+        if item == "bulletlog":
+            return int(val)
+        timestamp_str,item,val,_ = lines[-1].split(",")
+        timestamp = parse_timestamp_string(timestamp_str)
+        delta = dt.now() - timestamp
+        lines = lines[:-1]
+    return 0
+
+DEFAULT_VALUES = {
+    "painting": 60,
+    "bulletlog": min(5 + get_yesterday_bulletlog_val(), 30)
+        }
+
 
 def append_row(timestamp: str, item: str, val: int, comment: str = ""):
     with open(LEDGER_PATH, "a") as f:
@@ -124,6 +151,11 @@ if __name__ == "__main__":
     # Control flow, logic for different args
     if args.mode == "add":
         assert args.item in ITEMS, f"Couldn't find {args.item} in {ITEMS}"
+        # if there's a default value and the val is not specified, add that
+        if args.item in DEFAULT_VALUES.keys():
+            default_val = DEFAULT_VALUES[args.item]
+            if args.val == 0:
+                args.val = default_val
         assert args.val != 0, f"$ value must be set and !=0 (-v, --val)"
         # Decide whether item is spending or revenue
         if args.item in ITEMS_SPEND:
