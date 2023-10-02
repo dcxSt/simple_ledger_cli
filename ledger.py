@@ -159,10 +159,10 @@ if __name__ == "__main__":
         assert args.val != 0, f"$ value must be set and !=0 (-v, --val)"
         # Decide whether item is spending or revenue
         if args.item in ITEMS_SPEND:
-            print(f"{args.item} is a sin. Interpret val as $ spent.")
+            print(f"{args.item} is a sin. Interpret val {args.val} as $ spent.")
             args.val = -abs(args.val)
         elif args.item in ITEMS_EARN:
-            print(f"{args.item} is virtuous. Interpret val as income.")
+            print(f"{args.item} is virtuous. Interpret val {args.val} as income.")
             args.val = abs(args.val)
         else:
             raise Exception("This should never execute.")
